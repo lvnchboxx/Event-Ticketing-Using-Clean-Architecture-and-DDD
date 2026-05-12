@@ -1,6 +1,10 @@
 package com.example.eventticketing.domain.event.model;
 
+import com.example.eventticketing.domain.event.event.EventCancelled;
+import com.example.eventticketing.domain.event.event.EventCreated;
+import com.example.eventticketing.domain.event.event.EventPublished;
 import com.example.eventticketing.domain.shared.BusinessRuleException;
+import com.example.eventticketing.domain.shared.DomainEvent;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -22,6 +26,7 @@ public class Event {
     private EventStatus status;
 
     private final List<TicketCategory> ticketCategories = new ArrayList<>();
+    private final List<DomainEvent> domainEvents = new ArrayList<>();
 
     public Event(
             UUID organizerId,
@@ -49,6 +54,8 @@ public class Event {
         this.location = location;
         this.maximumCapacity = maximumCapacity;
         this.status = EventStatus.DRAFT;
+
+        domainEvents.add(new EventCreated(this.id, organizerId, LocalDateTime.now()));
     }
 
     public void addTicketCategory(TicketCategory ticketCategory) {
@@ -68,6 +75,10 @@ public class Event {
             throw new BusinessRuleException("Cancelled event cannot be published");
         }
 
+        if (status != EventStatus.DRAFT) {
+            throw new BusinessRuleException("Only draft event can be published");
+        }
+
         boolean hasActiveCategory = ticketCategories.stream()
                 .anyMatch(TicketCategory::isActive);
 
@@ -76,6 +87,7 @@ public class Event {
         }
 
         this.status = EventStatus.PUBLISHED;
+        domainEvents.add(new EventPublished(this.id, LocalDateTime.now()));
     }
 
     public void cancel() {
@@ -83,7 +95,17 @@ public class Event {
             throw new BusinessRuleException("Completed event cannot be cancelled");
         }
 
+        if (status != EventStatus.PUBLISHED) {
+            throw new BusinessRuleException("Only published event can be cancelled");
+        }
+
         this.status = EventStatus.CANCELLED;
         ticketCategories.forEach(TicketCategory::disable);
+
+        domainEvents.add(new EventCancelled(this.id, LocalDateTime.now()));
+    }
+
+    public void clearDomainEvents() {
+        domainEvents.clear();
     }
 }

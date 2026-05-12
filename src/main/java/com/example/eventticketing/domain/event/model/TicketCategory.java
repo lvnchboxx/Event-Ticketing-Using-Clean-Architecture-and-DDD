@@ -6,9 +6,6 @@ import java.util.UUID;
 import com.example.eventticketing.domain.shared.BusinessRuleException;
 import com.example.eventticketing.domain.shared.Money;
 
-import lombok.Getter;
-
-@Getter
 public class TicketCategory {
 
     private final UUID id;
@@ -42,6 +39,34 @@ public class TicketCategory {
         this.salesStartDate = salesStartDate;
         this.salesEndDate = salesEndDate;
         this.active = true;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Money getPrice() {
+        return price;
+    }
+
+    public int getQuota() {
+        return quota;
+    }
+
+    public LocalDateTime getSalesStartDate() {
+        return salesStartDate;
+    }
+
+    public LocalDateTime getSalesEndDate() {
+        return salesEndDate;
+    }
+
+    public boolean isActive() {
+        return active;
     }
 
     public void disable() {
