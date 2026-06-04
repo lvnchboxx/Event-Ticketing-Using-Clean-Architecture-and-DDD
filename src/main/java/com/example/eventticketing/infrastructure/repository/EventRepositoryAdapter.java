@@ -23,28 +23,29 @@ public class EventRepositoryAdapter implements EventRepository {
     @Override
     public Event save(Event event) {
         EventEntity entity = new EventEntity(
-                event.id(),
-                event.organizerId(),
-                event.name(),
-                event.description(),
-                event.startDate(),
-                event.endDate(),
-                event.location(),
-                event.maximumCapacity()
+                event.getId(),
+                event.getOrganizerId(),
+                event.getName(),
+                event.getDescription(),
+                event.getStartDate().atZone(java.time.ZoneId.systemDefault()).toInstant(),
+                event.getEndDate().atZone(java.time.ZoneId.systemDefault()).toInstant(),
+                event.getLocation(),
+                event.getMaximumCapacity()
         );
 
         EventEntity saved = jpaRepository.save(entity);
 
-       
+
         return new Event(
                 saved.getOrganizerId(),
                 saved.getName(),
                 saved.getDescription(),
-                saved.getStartDate(),
-                saved.getEndDate(),
+                saved.getStartDate().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
+                saved.getEndDate().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
                 saved.getLocation(),
                 saved.getMaximumCapacity()
         );
+
     }
 
     @Override
@@ -54,11 +55,12 @@ public class EventRepositoryAdapter implements EventRepository {
                         e.getOrganizerId(),
                         e.getName(),
                         e.getDescription(),
-                        e.getStartDate(),
-                        e.getEndDate(),
+                        e.getStartDate().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
+                        e.getEndDate().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
                         e.getLocation(),
                         e.getMaximumCapacity()
                 ));
     }
 }
+
 

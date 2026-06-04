@@ -53,6 +53,26 @@ Di repositori ini belum terlihat folder `infrastructure/` dan `presentation/` se
 ### 2.1 Command (DTO input use case)
 - `application/event/command/CreateEventCommand.java`
 
+### 2.2 Query (DTO input use case)
+- `application/event/query/FindEventByIdQuery.java`
+
+---
+### Alur Query: `FindEventById`
+1. **Query DTO**: `FindEventByIdQuery(UUID id)`
+2. **Handler**: `application/event/query/handler/FindEventByIdHandler.java`
+   - memanggil `findEventByIdUseCase.execute(query)`
+3. **Application Service (Use Case implementation)**: `FindEventByIdApplicationService`
+   - `validator.validate(query)`
+   - `eventRepository.findById(query.id())`
+   - jika tidak ada → `NotFoundException`
+4. **Query Validator**: `FindEventByIdQueryValidator`
+   - cek `query != null`
+   - cek `query.id() != null`
+5. **Repository Adapter (Infrastructure)**: `infrastructure/repository/EventRepositoryAdapter`
+   - mendelegasikan ke `SpringDataEventJpaRepository.findById(id)`
+   - mapping `EventEntity` → domain `Event`
+
+
 ### 2.2 Use Case Interface (boundary aplikasi)
 - `application/event/usecase/CreateEventUseCase.java`
   - Mendefinisikan kontrak: `Event execute(CreateEventCommand command);`
@@ -80,55 +100,7 @@ Di repositori ini belum terlihat folder `infrastructure/` dan `presentation/` se
 
 ---
 
-## 3) Infrastructure Layer (dibuatkan/diupayakan sesuai kriteria)
-Infrastructure layer pada project ini berisi adaptor teknis untuk:
-- skema/migrations PostgreSQL
-- implementasi repository (port dari Domain)
-- adaptor/potongan teknis yang dibutuhkan oleh Application
-- konfigurasi koneksi database
-
-(Contoh implementasi sudah ditambahkan di repo untuk bagian Event.)
-
-Kriteria Infrastructure layer untuk project ini adalah sebagai berikut:
-
-
-### 3.1 PostgreSQL schema or migrations
-Yang dibutuhkan:
-- Mekanisme pembuatan struktur tabel untuk entity domain (contoh: `events`, `bookings`, `refunds`).
-- Implementasi dapat berupa:
-  - **Flyway** (`db/migration/V1__init.sql`, dst.), atau
-  - **Liquibase**, atau
-  - Skrip SQL manual.
-
-### 3.2 Repository implementations (implementasi port dari Domain)
-Yang dibutuhkan:
-- class yang **mengimplementasikan interface port** di domain:
-  - `domain/event/repository/EventRepository`
-  - `domain/booking/repository/BookingRepository`
-  - `domain/refund/repository/RefundRepository`
-
-Contoh bentuk implementasi:
-- `EventRepositoryImpl implements EventRepository`
-  - melakukan operasi persistensi ke PostgreSQL melalui JPA/JdbcTemplate
-
-### 3.3 Application service implementations
-Di project ini, implementasi use case untuk `CreateEvent` sudah ada di `application/event/service/CreateEventApplicationService.java` (jadi secara current repo, bagian ini belum berpindah ke Infrastructure).
-
-Kriteria yang diinginkan:
-- Infrastructure layer dapat berisi adaptor teknis yang membantu application service (misal transaction boundary, repository impl, client HTTP, dsb.)
-- Bila ada use case yang benar-benar bergantung pada detail teknis, maka implementasinya bisa dipisah menjadi adapter (sesuai gaya proyek).
-
-### 3.4 Database connection configuration
-Yang dibutuhkan:
-- konfigurasi koneksi PostgreSQL (host, port, db-name, username, password)
-- konfigurasi JPA (DDL strategy, dialect, show-sql, dll.)
-
-Saat ini yang terlihat baru:
-- `src/main/resources/application.properties` hanya berisi `spring.application.name=eventticketing` (belum ada konfigurasi PostgreSQL lengkap).
-
-
-
-## 3) Infrastructure Layer (Target yang disarankan, dengan 4 kriteria)
+## 3) Infrastructure Layer 
 Di bawah ini adalah “kerangka” Infrastructure yang memenuhi kriteria yang kamu minta:
 
 ### 3.0 Tujuan Infrastructure
