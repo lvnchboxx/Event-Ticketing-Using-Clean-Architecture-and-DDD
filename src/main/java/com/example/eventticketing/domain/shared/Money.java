@@ -35,4 +35,16 @@ public class Money {
 
         return new Money(amount.multiply(BigDecimal.valueOf(quantity)), currency);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Money other)) return false;
+        return amount.compareTo(other.amount) == 0 && currency.equals(other.currency);
+    }
+
+    @Override
+    public int hashCode() {
+        return amount.stripTrailingZeros().hashCode() + currency.hashCode();
+    }
 }

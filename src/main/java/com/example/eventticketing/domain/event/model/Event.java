@@ -1,12 +1,17 @@
 package com.example.eventticketing.domain.event.model;
 
-import com.example.eventticketing.domain.shared.BusinessRuleException;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import com.example.eventticketing.domain.event.event.EventCancelled;
+import com.example.eventticketing.domain.event.event.EventCreated;
+import com.example.eventticketing.domain.event.event.EventPublished;
+import com.example.eventticketing.domain.shared.BusinessRuleException;
+import com.example.eventticketing.domain.shared.DomainEvent;
+
+import lombok.Getter;
 
 @Getter
 public class Event {
@@ -22,6 +27,7 @@ public class Event {
     private EventStatus status;
 
     private final List<TicketCategory> ticketCategories = new ArrayList<>();
+    private final List<DomainEvent> domainEvents = new ArrayList<>();
 
     public Event(
             UUID organizerId,
@@ -32,15 +38,56 @@ public class Event {
             String location,
             int maximumCapacity
     ) {
-        if (endDate.isBefore(startDate)) {
-            throw new BusinessRuleException("Event end date cannot be earlier than start date");
-        }
+        this(
+                UUID.randomUUID(),
+                organizerId,
+                name,
+                description,
+                startDate,
+                endDate,
+                location,
+                maximumCapacity,
+                true
+        );
+    }
 
-        if (maximumCapacity <= 0) {
-            throw new BusinessRuleException("Maximum capacity must be greater than zero");
-        }
+    public Event(
+            UUID id,
+            UUID organizerId,
+            String name,
+            String description,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            String location,
+            int maximumCapacity
+    ) {
+        this(
+                id,
+                organizerId,
+                name,
+                description,
+                startDate,
+                endDate,
+                location,
+                maximumCapacity,
+                false
+        );
+    }
 
-        this.id = UUID.randomUUID();
+    private Event(
+            UUID id,
+            UUID organizerId,
+            String name,
+            String description,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            String location,
+            int maximumCapacity,
+            boolean raiseCreatedEvent
+    ) {
+        validate(id, organizerId, startDate, endDate, maximumCapacity);
+
+        this.id = id;
         this.organizerId = organizerId;
         this.name = name;
         this.description = description;
@@ -49,6 +96,38 @@ public class Event {
         this.location = location;
         this.maximumCapacity = maximumCapacity;
         this.status = EventStatus.DRAFT;
+
+        if (raiseCreatedEvent) {
+            domainEvents.add(new EventCreated(this.id, organizerId, LocalDateTime.now()));
+        }
+    }
+
+    private void validate(
+            UUID id,
+            UUID organizerId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            int maximumCapacity
+    ) {
+        if (id == null) {
+            throw new BusinessRuleException("Event id cannot be null");
+        }
+
+        if (organizerId == null) {
+            throw new BusinessRuleException("Organizer id cannot be null");
+        }
+
+        if (startDate == null || endDate == null) {
+            throw new BusinessRuleException("Event start date and end date cannot be null");
+        }
+
+        if (endDate.isBefore(startDate)) {
+            throw new BusinessRuleException("Event end date cannot be earlier than start date");
+        }
+
+        if (maximumCapacity <= 0) {
+            throw new BusinessRuleException("Maximum capacity must be greater than zero");
+        }
     }
 
     public void addTicketCategory(TicketCategory ticketCategory) {
@@ -68,6 +147,10 @@ public class Event {
             throw new BusinessRuleException("Cancelled event cannot be published");
         }
 
+        if (status != EventStatus.DRAFT) {
+            throw new BusinessRuleException("Only draft event can be published");
+        }
+
         boolean hasActiveCategory = ticketCategories.stream()
                 .anyMatch(TicketCategory::isActive);
 
@@ -76,6 +159,7 @@ public class Event {
         }
 
         this.status = EventStatus.PUBLISHED;
+        domainEvents.add(new EventPublished(this.id, LocalDateTime.now()));
     }
 
     public void cancel() {
@@ -83,7 +167,17 @@ public class Event {
             throw new BusinessRuleException("Completed event cannot be cancelled");
         }
 
+        if (status != EventStatus.PUBLISHED) {
+            throw new BusinessRuleException("Only published event can be cancelled");
+        }
+
         this.status = EventStatus.CANCELLED;
         ticketCategories.forEach(TicketCategory::disable);
+
+        domainEvents.add(new EventCancelled(this.id, LocalDateTime.now()));
+    }
+
+    public void clearDomainEvents() {
+        domainEvents.clear();
     }
 }
