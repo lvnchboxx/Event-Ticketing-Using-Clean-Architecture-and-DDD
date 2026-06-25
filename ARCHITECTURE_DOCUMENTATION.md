@@ -430,10 +430,12 @@ Bukti pengujian:
   <img width="832" height="862" alt="image" src="https://github.com/user-attachments/assets/2a317650-6890-4b10-9a57-98200a3da9f2" />
 
 * Data event muncul di tabel `events` pada PostgreSQL.
-<img width="852" height="843" alt="image" src="https://github.com/user-attachments/assets/4aadb33a-cdd8-4c18-bb09-ed8b2042d16b" />
+<img width="856" height="842" alt="image" src="https://github.com/user-attachments/assets/521a8f07-455a-47f2-8b7a-d5d67efd96f1" />
+
 
 * `GET /api/events/{id}` berhasil mengambil data menggunakan UUID yang sama.
-  <img width="837" height="867" alt="image" src="https://github.com/user-attachments/assets/dafbccc3-6633-49f3-9ffa-41d9a2d86c97" />
+  <img width="840" height="853" alt="image" src="https://github.com/user-attachments/assets/43a2cff0-66d6-42cd-b7fa-1dd5af794d88" />
+
 
 
 Ini membuktikan bahwa alur Clean Architecture berjalan:
