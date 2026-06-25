@@ -456,10 +456,10 @@ Presentation Layer
 - **Application Layer**
   - `src/main/java/.../application/**`
 - **Infrastructure Layer**
-  - src/main/java/.../infrastructure/**
-  - src/main/resources/db/migration/**
+  - `src/main/java/.../infrastructure/**`
+  - `src/main/resources/db/migration/**`
 - **Presentation Layer**
-  - src/main/java/.../presentation/**
+  - `src/main/java/.../presentation/**`
 
 
 
