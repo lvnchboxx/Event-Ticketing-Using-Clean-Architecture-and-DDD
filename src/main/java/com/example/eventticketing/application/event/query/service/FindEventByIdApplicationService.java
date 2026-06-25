@@ -1,15 +1,17 @@
 package com.example.eventticketing.application.event.query.service;
 
+import java.util.Objects;
+
+import org.springframework.stereotype.Service;
+
 import com.example.eventticketing.application.event.query.FindEventByIdQuery;
-import com.example.eventticketing.application.event.query.FindEventByIdQueryValidator;
 import com.example.eventticketing.application.event.query.usecase.FindEventByIdUseCase;
 import com.example.eventticketing.application.exception.NotFoundException;
 import com.example.eventticketing.application.validation.QueryValidator;
 import com.example.eventticketing.domain.event.model.Event;
 import com.example.eventticketing.domain.event.repository.EventRepository;
 
-import java.util.Objects;
-
+@Service
 public class FindEventByIdApplicationService implements FindEventByIdUseCase {
 
     private final EventRepository eventRepository;

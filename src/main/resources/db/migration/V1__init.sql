@@ -1,6 +1,8 @@
 -- Flyway baseline schema for Event Ticketing
 -- Note: Run with Flyway or any migration mechanism.
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TABLE IF NOT EXISTS events (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     organizer_id uuid NOT NULL,

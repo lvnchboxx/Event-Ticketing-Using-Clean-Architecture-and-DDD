@@ -1,13 +1,16 @@
 package com.example.eventticketing.application.event.service;
 
+import java.util.Objects;
+
+import org.springframework.stereotype.Service;
+
 import com.example.eventticketing.application.event.command.CreateEventCommand;
 import com.example.eventticketing.application.event.usecase.CreateEventUseCase;
 import com.example.eventticketing.application.validation.CommandValidator;
 import com.example.eventticketing.domain.event.model.Event;
 import com.example.eventticketing.domain.event.repository.EventRepository;
 
-import java.util.Objects;
-
+@Service
 public class CreateEventApplicationService implements CreateEventUseCase {
 
     private final EventRepository eventRepository;

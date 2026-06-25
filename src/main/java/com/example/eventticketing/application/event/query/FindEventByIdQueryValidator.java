@@ -1,8 +1,11 @@
 package com.example.eventticketing.application.event.query;
 
+import org.springframework.stereotype.Component;
+
 import com.example.eventticketing.application.exception.ValidationException;
 import com.example.eventticketing.application.validation.QueryValidator;
 
+@Component
 public class FindEventByIdQueryValidator implements QueryValidator<FindEventByIdQuery> {
 
     @Override

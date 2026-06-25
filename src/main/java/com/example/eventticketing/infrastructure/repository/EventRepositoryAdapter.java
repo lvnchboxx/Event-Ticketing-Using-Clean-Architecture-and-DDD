@@ -1,15 +1,14 @@
 package com.example.eventticketing.infrastructure.repository;
 
-import com.example.eventticketing.domain.event.model.Event;
-import com.example.eventticketing.domain.event.repository.EventRepository;
-import com.example.eventticketing.infrastructure.persistence.EventEntity;
-import org.springframework.stereotype.Repository;
-
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
 
-import static java.util.Objects.requireNonNull;
+import org.springframework.stereotype.Repository;
 
+import com.example.eventticketing.domain.event.model.Event;
+import com.example.eventticketing.domain.event.repository.EventRepository;
+import com.example.eventticketing.infrastructure.persistence.EventEntity;
 
 @Repository
 public class EventRepositoryAdapter implements EventRepository {
@@ -27,40 +26,33 @@ public class EventRepositoryAdapter implements EventRepository {
                 event.getOrganizerId(),
                 event.getName(),
                 event.getDescription(),
-                event.getStartDate().atZone(java.time.ZoneId.systemDefault()).toInstant(),
-                event.getEndDate().atZone(java.time.ZoneId.systemDefault()).toInstant(),
+                event.getStartDate().atZone(ZoneId.systemDefault()).toInstant(),
+                event.getEndDate().atZone(ZoneId.systemDefault()).toInstant(),
                 event.getLocation(),
                 event.getMaximumCapacity()
         );
 
         EventEntity saved = jpaRepository.save(entity);
 
-
-        return new Event(
-                saved.getOrganizerId(),
-                saved.getName(),
-                saved.getDescription(),
-                saved.getStartDate().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
-                saved.getEndDate().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
-                saved.getLocation(),
-                saved.getMaximumCapacity()
-        );
-
+        return toDomain(saved);
     }
 
     @Override
     public Optional<Event> findById(UUID id) {
         return jpaRepository.findById(id)
-                .map(e -> new Event(
-                        e.getOrganizerId(),
-                        e.getName(),
-                        e.getDescription(),
-                        e.getStartDate().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
-                        e.getEndDate().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
-                        e.getLocation(),
-                        e.getMaximumCapacity()
-                ));
+                .map(this::toDomain);
+    }
+
+    private Event toDomain(EventEntity entity) {
+        return new Event(
+                entity.getId(),
+                entity.getOrganizerId(),
+                entity.getName(),
+                entity.getDescription(),
+                entity.getStartDate().atZone(ZoneId.systemDefault()).toLocalDateTime(),
+                entity.getEndDate().atZone(ZoneId.systemDefault()).toLocalDateTime(),
+                entity.getLocation(),
+                entity.getMaximumCapacity()
+        );
     }
 }
-
-
