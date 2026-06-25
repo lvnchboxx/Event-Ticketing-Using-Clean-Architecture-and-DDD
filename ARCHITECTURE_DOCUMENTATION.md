@@ -185,20 +185,281 @@ Saat ini, file `application.properties` belum berisi konfigurasi PostgreSQL ters
     - adapter implementasi `EventRepository/BookingRepository/RefundRepository`
 
 
+## 4) Presentation Layer (`presentation/`)
 
+**Lokasi:**
+`src/main/java/com/example/eventticketing/presentation/`
 
+**Tujuan:**
 
+* Menjadi entry point dari luar sistem melalui REST API.
+* Menerima HTTP request dari client seperti Postman/Thunder Client.
+* Mengubah request JSON menjadi Command atau Query untuk Application Layer.
+* Mengembalikan response JSON kepada client.
+* Menangani error agar response API lebih jelas.
 
+Presentation Layer tidak berisi business logic utama. Business logic tetap berada di Domain Layer, sedangkan alur use case berada di Application Layer.
 
-## 4) Presentation Layer 
+---
+
+### 4.1 Struktur Folder Presentation
+
+Struktur yang digunakan:
+
+```text
+presentation/
+└── rest/
+    ├── EventController.java
+    ├── GlobalExceptionHandler.java
+    ├── request/
+    │   └── CreateEventRequest.java
+    └── response/
+        └── EventResponse.java
+```
+
+---
+
+### 4.2 REST Controller
+
+File utama:
+
+```text
+presentation/rest/EventController.java
+```
+
+`EventController` bertugas menyediakan endpoint REST untuk fitur Event.
+
+Endpoint yang sudah dibuat:
+
+```text
+POST /api/events
+GET  /api/events/{eventId}
+```
+
+Controller tidak langsung mengakses database. Controller hanya memanggil Application Service:
+
+```text
+EventController
+→ CreateEventApplicationService / FindEventByIdApplicationService
+→ EventRepository interface
+→ EventRepositoryAdapter
+→ SpringDataEventJpaRepository
+→ PostgreSQL
+```
+
+Dengan alur ini, Presentation Layer tetap terpisah dari Infrastructure Layer.
+
+---
+
+### 4.3 Request DTO
+
+File:
+
+```text
+presentation/rest/request/CreateEventRequest.java
+```
+
+`CreateEventRequest` digunakan untuk menerima body JSON dari client ketika membuat event baru.
+
+Contoh request JSON:
+
+```json
+{
+  "organizerId": "12311111-1111-1111-1111-111111111111",
+  "name": "Javajazz",
+  "description": "Outdoor music event",
+  "startDate": "2026-06-10T10:00:00",
+  "endDate": "2026-06-10T12:00:00",
+  "location": "bekasi",
+  "maximumCapacity": 10
+}
+```
+
+Request DTO ini kemudian diubah menjadi `CreateEventCommand` sebelum dikirim ke Application Layer.
+
+---
+
+### 4.4 Response DTO
+
+File:
+
+```text
+presentation/rest/response/EventResponse.java
+```
+
+`EventResponse` digunakan untuk mengembalikan data event ke client dalam bentuk JSON.
+
+Contoh response:
+
+```json
+{
+  "id": "9e7c9a88-6827-4f7c-bc95-a1d05dcb7631",
+  "organizerId": "12311111-1111-1111-1111-111111111111",
+  "name": "Javajazz",
+  "description": "Outdoor music event",
+  "startDate": "2026-06-10T10:00:00",
+  "endDate": "2026-06-10T12:00:00",
+  "location": "bekasi",
+  "maximumCapacity": 10,
+  "status": "DRAFT"
+}
+```
+
+Response DTO membantu agar data yang dikirim ke client lebih terkontrol dan tidak langsung mengekspos seluruh object domain.
+
+---
+
+### 4.5 Global Exception Handler
+
+File:
+
+```text
+presentation/rest/GlobalExceptionHandler.java
+```
+
+`GlobalExceptionHandler` digunakan untuk menangani error dari aplikasi dan mengubahnya menjadi response HTTP yang jelas.
+
+Contoh error yang ditangani:
+
+```text
+BusinessRuleException → 400 Bad Request
+NotFoundException     → 404 Not Found
+Exception umum        → 500 Internal Server Error
+```
+
+Contoh response ketika event tidak ditemukan:
+
+```json
+{
+  "message": "Event not found. id=..."
+}
+```
+
+Dengan ini, API tidak hanya mengembalikan error default dari Spring, tetapi memberikan pesan error yang lebih mudah dipahami.
+
+---
+
+### 4.6 Alur Endpoint: Create Event
+
+Endpoint:
+
+```text
+POST /api/events
+```
+
+Alur eksekusi:
+
+```text
+Client/Postman
+→ EventController.createEvent()
+→ CreateEventRequest
+→ CreateEventCommand
+→ CreateEventApplicationService.execute(command)
+→ CreateEventCommandValidator.validate(command)
+→ new Event(...)
+→ EventRepository.save(event)
+→ EventRepositoryAdapter
+→ SpringDataEventJpaRepository
+→ PostgreSQL table events
+→ EventResponse
+→ JSON response
+```
+
+Penjelasan:
+
+1. Client mengirim JSON request.
+2. Controller menerima request sebagai `CreateEventRequest`.
+3. Controller membuat `CreateEventCommand`.
+4. Application Service menjalankan use case pembuatan event.
+5. Domain Entity `Event` dibuat dengan status awal `DRAFT`.
+6. Repository menyimpan event ke PostgreSQL.
+7. Controller mengembalikan `EventResponse`.
+
+---
+
+### 4.7 Alur Endpoint: Find Event By ID
+
+Endpoint:
+
+```text
+GET /api/events/{eventId}
+```
+
+Alur eksekusi:
+
+```text
+Client/Postman
+→ EventController.findEventById()
+→ FindEventByIdQuery
+→ FindEventByIdApplicationService.execute(query)
+→ FindEventByIdQueryValidator.validate(query)
+→ EventRepository.findById(id)
+→ EventRepositoryAdapter
+→ SpringDataEventJpaRepository
+→ PostgreSQL table events
+→ EventResponse
+→ JSON response
+```
+
+Penjelasan:
+
+1. Client mengirim request dengan `eventId` pada URL.
+2. Controller membuat `FindEventByIdQuery`.
+3. Application Service memvalidasi query.
+4. Repository mencari data event berdasarkan ID.
+5. Jika data ditemukan, event dikembalikan sebagai `EventResponse`.
+6. Jika data tidak ditemukan, aplikasi mengembalikan `404 Not Found`.
+
+---
+
+### 4.8 Bukti Integrasi
+
+Presentation Layer sudah terhubung dengan layer lain melalui endpoint berikut:
+
+```text
+POST /api/events       → berhasil membuat event dan menyimpan ke PostgreSQL
+GET /api/events/{id}   → berhasil mengambil event dari PostgreSQL
+```
+
+Bukti pengujian:
+
+* `POST /api/events` menghasilkan status `200 OK`.
+* Response mengembalikan data event dengan UUID.
+* Data event muncul di tabel `events` pada PostgreSQL.
+* `GET /api/events/{id}` berhasil mengambil data menggunakan UUID yang sama.
+
+Ini membuktikan bahwa alur Clean Architecture berjalan:
+
+```text
+Presentation Layer
+→ Application Layer
+→ Domain Layer
+→ Infrastructure Layer
+→ PostgreSQL Database
+```
+
+---
+
+### 4.9 Aturan Main Presentation Layer
+
+* Controller hanya menerima request dan mengembalikan response.
+* Controller tidak menyimpan business logic.
+* Controller tidak mengakses database secara langsung.
+* Request dari client dipetakan menjadi Command atau Query.
+* Response dari domain dipetakan menjadi Response DTO.
+* Error ditangani melalui `GlobalExceptionHandler`.
+
 
 ## ) Ringkasan Mapping Layer → Folder
 - **Domain Layer**
   - `src/main/java/.../domain/**`
 - **Application Layer**
   - `src/main/java/.../application/**`
-- **Infrastructure Layer (belum terlihat eksplisit)**
-  - ideal: `src/main/java/.../infrastructure/**`
+- **Infrastructure Layer**
+  - src/main/java/.../infrastructure/**
+  - src/main/resources/db/migration/**
+- **Presentation Layer**
+  - src/main/java/.../presentation/**
 
 
 
