@@ -1,10 +1,11 @@
 package com.example.eventticketing.application.validation;
 
+import org.springframework.stereotype.Component;
+
 import com.example.eventticketing.application.event.command.CreateEventCommand;
 import com.example.eventticketing.application.exception.ValidationException;
 
-import java.time.LocalDateTime;
-
+@Component
 public class CreateEventCommandValidator implements CommandValidator<CreateEventCommand> {
 
     @Override
